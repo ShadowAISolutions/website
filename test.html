@@ -5,47 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GAS Self-Update Dashboard</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
-      background: #fafafa;
-    }
-    h1 {
-      margin: 20px 0 10px;
-      color: #333;
-    }
-    #status {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 10px;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
     }
     iframe {
-      width: 90%;
-      max-width: 800px;
-      height: 80vh;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      width: 100%;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
-  <h1>GAS Self-Update Dashboard</h1>
-  <div id="status">Waiting for updates...</div>
-
   <iframe id="gas-app"
-    src="https://script.google.com/a/macros/shadowaisolutions.com/s/AKfycbwkKbU1fJ-bsVUi9ZQ8d3MVdT2FfTsG14h52R1K_bsreaL7RgmkC4JJrMtwiq5VZEYX-g/exec">
+    src="https://script.google.com/a/macros/shadowaisolutions.com/s/AKfycbwkKbU1fJ-bsVUi9ZQ8d3MVdT2FfTsG14h52R1K_bsreaL7RgmkC4JJrMtwiq5VZEYX-g/exec"
+    allow="*">
   </iframe>
 
   <script>
     window.addEventListener('message', function(e) {
-      console.log('postMessage received:', e.data, 'from:', e.origin);
       if (e.data && e.data.type === 'gas-reload') {
-        document.getElementById('status').textContent =
-          'Deployed ' + e.data.version + ' — reloading iframe...';
         var iframe = document.getElementById('gas-app');
         iframe.src = iframe.src;
       }
