@@ -61,10 +61,9 @@
       } catch(e) { playBeep(); }
     }
 
-    // After reload: try to play stored sound + vibrate (works on desktop + Android)
+    // After reload: try to play stored sound + vibrate
     if (sessionStorage.getItem('gas-pending-sound')) {
       sessionStorage.removeItem('gas-pending-sound');
-      // Vibrate on Android (ignored on desktop/iOS)
       if (navigator.vibrate) navigator.vibrate(200);
       var soundData = sessionStorage.getItem('gas-sound-data');
       if (soundData) {
@@ -83,6 +82,22 @@
         }
         window.location.reload();
       }
+    });
+
+    // Screen Wake Lock — keep Android screen on while page is visible
+    var _wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if (navigator.wakeLock) {
+          _wakeLock = await navigator.wakeLock.request('screen');
+          _wakeLock.addEventListener('release', function() { _wakeLock = null; });
+        }
+      } catch(e) {}
+    }
+    requestWakeLock();
+    // Re-acquire when tab becomes visible again (auto-releases on tab switch)
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') requestWakeLock();
     });
   </script>
 </body>
