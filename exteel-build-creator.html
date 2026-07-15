@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exteel Build Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08111f;
+  --panel:#0e2036;
+  --panel2:#122a47;
+  --edge:#2d6fa8;
+  --edge-hi:#54a8e0;
+  --label:#6fb6e0;
+  --value:#eef6fd;
+  --gold:#f5c93f;
+  --ok:#57d98a;
+  --bad:#ff5f5f;
+  --bar-track:#081726;
+  --bar-fill1:#bfeaff;
+  --bar-fill2:#2f8fd4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(1100px 500px at 75% -10%, rgba(50,120,190,.18), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px);
+  color:var(--value);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+  padding:22px 18px 60px;
+}
+.wrap{max-width:1060px;margin:0 auto}
+
+/* header */
+.hdr{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--edge);padding-bottom:10px;margin-bottom:18px}
+.hdr h1{font-size:26px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--value)}
+.hdr h1 span{color:var(--edge-hi)}
+.hdr .sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--label);letter-spacing:.12em}
+
+.cols{display:grid;grid-template-columns:1fr 380px;gap:18px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+
+/* game-style panel */
+.panel{
+  background:linear-gradient(180deg, var(--panel2), var(--panel) 40%);
+  border:1px solid var(--edge);
+  border-radius:6px;
+  box-shadow:inset 0 0 0 1px rgba(84,168,224,.14), 0 0 24px rgba(0,0,0,.45);
+  padding:14px 16px 16px;
+  position:relative;
+}
+.panel::before{
+  content:attr(data-tab);
+  position:absolute;top:-11px;left:14px;
+  background:var(--panel2);
+  border:1px solid var(--edge);
+  border-bottom-color:var(--panel2);
+  padding:2px 12px 1px;
+  font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--value);
+  border-radius:5px 5px 0 0;
+}
+.panel + .panel{margin-top:20px}
+
+/* slot rows */
+.slot{display:grid;grid-template-columns:96px 1fr 118px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(84,168,224,.14)}
+.slot:last-child{border-bottom:none}
+.slot label{color:var(--label);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+select{
+  width:100%;
+  background:var(--bar-track);
+  color:var(--value);
+  border:1px solid var(--edge);
+  border-radius:3px;
+  padding:6px 8px;
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;font-weight:600;
+  outline:none;
+  cursor:pointer;
+}
+select:focus-visible{border-color:var(--edge-hi);box-shadow:0 0 0 2px rgba(84,168,224,.35)}
+select option, select optgroup{background:#0b1c30;color:var(--value)}
+.slot .mini{
+  font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--label);
+  text-align:right;line-height:1.5;white-space:nowrap;
+}
+.slot .mini b{color:var(--value);font-weight:400}
+
+/* totals */
+.trow{display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:baseline;padding:4px 0}
+.trow .k{color:var(--label);font-size:13px;font-weight:600;letter-spacing:.08em}
+.trow .v{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--value);text-align:right}
+.trow .v.gold{color:var(--gold)}
+
+/* capacity gauges */
+.gauge{margin:12px 0 4px}
+.gauge .grow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.gauge .gk{color:var(--label);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.gauge .gv{font-family:'Share Tech Mono',monospace;font-size:12.5px;color:var(--value)}
+.bar{
+  height:14px;background:var(--bar-track);
+  border:1px solid var(--edge);border-radius:2px;
+  position:relative;overflow:hidden;
+}
+.bar .fill{
+  height:100%;width:0%;
+  background:linear-gradient(180deg, var(--bar-fill1), var(--bar-fill2) 55%, #1a5c93);
+  transition:width .35s ease, background .35s ease;
+}
+.bar .fill.over{background:linear-gradient(180deg,#ffb3b3,#e04747 55%,#8f1f1f)}
+.bar .ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgba(8,20,35,.85) calc(10% - 1px) 10%)}
+.margin{font-family:'Share Tech Mono',monospace;font-size:11.5px;margin-top:3px;text-align:right}
+.margin.ok{color:var(--ok)}
+.margin.bad{color:var(--bad)}
+
+/* weapon detail bars */
+.wstat{display:grid;grid-template-columns:76px 1fr 34px;gap:8px;align-items:center;padding:2px 0}
+.wstat .k{color:var(--label);font-size:11.5px;font-weight:600;letter-spacing:.06em}
+.wstat .bar{height:9px}
+.wstat .n{font-family:'Share Tech Mono',monospace;font-size:10.5px;color:var(--label);text-align:right}
+.wname{font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.06em;margin:10px 0 3px}
+.wname:first-child{margin-top:2px}
+.muted{color:var(--label);font-size:12px;font-style:italic}
+
+/* operator footer note */
+.opnote{
+  margin-top:20px;border:1px solid var(--edge);border-radius:6px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  padding:10px 14px;font-size:12.5px;color:var(--label);line-height:1.55;
+}
+.opnote b{color:var(--gold);letter-spacing:.15em;font-size:11px}
+button.reset{
+  margin-top:12px;width:100%;
+  background:var(--bar-track);border:1px solid var(--edge);border-radius:3px;
+  color:var(--label);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:.2em;text-transform:uppercase;padding:8px;cursor:pointer;
+}
+button.reset:hover,button.reset:focus-visible{color:var(--value);border-color:var(--edge-hi);outline:none}
+
+/* tabs */
+.tabbar{display:flex;gap:6px;margin-bottom:16px}
+.tabbtn{
+  background:var(--bar-track);border:1px solid var(--edge);border-bottom:none;
+  border-radius:6px 6px 0 0;color:var(--label);font-family:'Rajdhani',sans-serif;
+  font-weight:700;font-size:13px;letter-spacing:.18em;text-transform:uppercase;
+  padding:8px 22px;cursor:pointer;
+}
+.tabbtn.active{background:linear-gradient(180deg,var(--panel2),var(--panel));color:var(--value);border-color:var(--edge-hi)}
+.tabbtn:hover{color:var(--value)}
+/* presets */
+.presets{margin-bottom:20px}
+.pgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0}
+.ptag{color:var(--label);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;min-width:78px}
+button.preset{
+  background:var(--bar-track);border:1px solid var(--edge);border-radius:3px;
+  color:var(--value);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;
+  padding:5px 12px;cursor:pointer;letter-spacing:.04em;
+}
+button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
+/* derived stats */
+.trow .v.d{color:#9fd8ff}
+.badge{
+  display:inline-block;padding:2px 12px;border-radius:3px;font-family:'Share Tech Mono',monospace;
+  font-size:12px;letter-spacing:.12em;border:1px solid;
+}
+.badge.float{color:var(--ok);border-color:var(--ok);background:rgba(87,217,138,.08)}
+.badge.skate{color:var(--bad);border-color:var(--bad);background:rgba(255,95,95,.08)}
+.badge.unk{color:var(--gold);border-color:var(--gold);background:rgba(245,201,63,.08)}
+.allow{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(84,168,224,.14);margin-top:8px}
+.allow label{color:var(--label);font-size:12px;font-weight:600;letter-spacing:.06em}
+.allow input{
+  background:var(--bar-track);border:1px solid var(--edge);border-radius:3px;color:var(--value);
+  font-family:'Share Tech Mono',monospace;font-size:13px;padding:4px 6px;text-align:right;width:100%;
+}
+/* database */
+.dbctl{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.dblab{color:var(--label);font-size:12px;font-weight:700;letter-spacing:.15em;text-transform:uppercase}
+.dbctl select{width:auto;min-width:160px}
+.dbhint{color:var(--label);font-size:11px;font-style:italic;margin-left:auto}
+.dbwrap{overflow-x:auto}
+#db-table{border-collapse:collapse;width:100%;font-size:13px}
+#db-table th{
+  color:var(--label);text-align:right;padding:6px 10px;border-bottom:1px solid var(--edge);
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;user-select:none;
+}
+#db-table th:first-child, #db-table td:first-child{text-align:left}
+#db-table th.sorted{color:var(--gold)}
+#db-table td{
+  padding:5px 10px;border-bottom:1px solid rgba(84,168,224,.10);
+  font-family:'Share Tech Mono',monospace;font-size:12px;text-align:right;white-space:nowrap;color:var(--value);
+}
+#db-table td:first-child{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13.5px}
+#db-table tr:hover td{background:rgba(84,168,224,.07);cursor:pointer}
+
+@media (prefers-reduced-motion: reduce){ .bar .fill{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>Mechanaught <span>Assembly</span></h1>
+    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED</div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tabbtn active" data-view="v-assembly">Assembly</button>
+    <button class="tabbtn" data-view="v-database">Database</button>
+  </div>
+
+  <div id="v-assembly">
+  <div class="panel presets" data-tab="Presets &amp; Tests">
+    <div class="pgroup"><span class="ptag">Float tests</span>
+      <button class="preset" data-p="test1">Test 1 · Heavy-Core</button>
+      <button class="preset" data-p="test2">Test 2 · 84k Bisect</button>
+    </div>
+    <div class="pgroup"><span class="ptag">Builds</span>
+      <button class="preset" data-p="skyline">Skyline</button>
+      <button class="preset" data-p="skylineg">Skyline-G</button>
+      <button class="preset" data-p="warlord">Warlord</button>
+      <button class="preset" data-p="prime">Prime (orig)</button>
+      <button class="preset" data-p="lprime">Light Prime</button>
+      <button class="preset" data-p="fortress">Fortress</button>
+    </div>
+  </div>
+  <div class="cols">
+    <div>
+      <div class="panel" data-tab="Parts">
+        <div class="slot"><label for="s-head">Head</label><select id="s-head"></select><div class="mini" id="m-head"></div></div>
+        <div class="slot"><label for="s-core">Core</label><select id="s-core"></select><div class="mini" id="m-core"></div></div>
+        <div class="slot"><label for="s-arms">Arms</label><select id="s-arms"></select><div class="mini" id="m-arms"></div></div>
+        <div class="slot"><label for="s-legs">Legs</label><select id="s-legs"></select><div class="mini" id="m-legs"></div></div>
+        <div class="slot"><label for="s-booster">Booster</label><select id="s-booster"></select><div class="mini" id="m-booster"></div></div>
+      </div>
+
+      <div class="panel" data-tab="Weapons">
+        <div class="slot"><label for="s-w1l">Wpn 1 · L</label><select id="s-w1l"></select><div class="mini" id="m-w1l"></div></div>
+        <div class="slot"><label for="s-w1r">Wpn 1 · R</label><select id="s-w1r"></select><div class="mini" id="m-w1r"></div></div>
+        <div class="slot"><label for="s-w2l">Wpn 2 · L</label><select id="s-w2l"></select><div class="mini" id="m-w2l"></div></div>
+        <div class="slot"><label for="s-w2r">Wpn 2 · R</label><select id="s-w2r"></select><div class="mini" id="m-w2r"></div></div>
+      </div>
+
+      <div class="panel" data-tab="Weapon Gauges" id="wpanel">
+        <div class="muted" id="wempty">Equip a weapon to see its gauge readout.</div>
+        <div id="wbars"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" data-tab="Mechanaught Info">
+        <div class="trow"><div class="k">Total HP</div><div class="v" id="t-hp">0</div></div>
+        <div class="trow"><div class="k">Total EN Drain</div><div class="v" id="t-en">0</div></div>
+        <div class="trow"><div class="k">Total Size</div><div class="v" id="t-size">0</div></div>
+        <div class="trow"><div class="k">Total Weight</div><div class="v gold" id="t-wt">0</div></div>
+
+        <div class="trow"><div class="k">Move Speed</div><div class="v d" id="t-move">—</div></div>
+        <div class="trow"><div class="k">Dash Speed</div><div class="v d" id="t-dash">—</div></div>
+        <div class="trow"><div class="k">Jump EN Drain</div><div class="v d" id="t-jump">—</div></div>
+        <div class="trow"><div class="k">EN Recovery</div><div class="v d" id="t-recov">—</div></div>
+        <div class="trow"><div class="k">Locomotion</div><div class="v" id="t-float">—</div></div>
+        <div class="allow"><label for="allow">Unlisted weapon wt.</label><input id="allow" type="number" value="0" min="0" step="100"></div>
+
+        <div class="gauge">
+          <div class="grow"><div class="gk">Weight Load</div><div class="gv" id="g-wt-v">0 / 0</div></div>
+          <div class="bar"><div class="fill" id="g-wt-f"></div><div class="ticks"></div></div>
+          <div class="margin" id="g-wt-m"></div>
+        </div>
+
+        <div class="gauge">
+          <div class="grow"><div class="gk">EN Load</div><div class="gv" id="g-en-v">0 / 0</div></div>
+          <div class="bar"><div class="fill" id="g-en-f"></div><div class="ticks"></div></div>
+          <div class="margin" id="g-en-m"></div>
+        </div>
+      </div>
+
+      <div class="panel" data-tab="Detail Readout">
+        <div class="trow"><div class="k">SP (Head)</div><div class="v" id="d-sp">—</div></div>
+        <div class="trow"><div class="k">MPU (Head)</div><div class="v" id="d-mpu">—</div></div>
+        <div class="trow"><div class="k">Scan Range</div><div class="v" id="d-scan">—</div></div>
+        <div class="trow"><div class="k">Core EN Pool</div><div class="v" id="d-enp">—</div></div>
+        <div class="trow"><div class="k">EN Output Rate</div><div class="v" id="d-eno">—</div></div>
+        <div class="trow"><div class="k">Min. EN Required</div><div class="v" id="d-enm">—</div></div>
+        <div class="trow"><div class="k">Marksmanship</div><div class="v" id="d-marks">—</div></div>
+        <div class="trow"><div class="k">Max Heat</div><div class="v" id="d-heat">—</div></div>
+        <div class="trow"><div class="k">Basic Speed</div><div class="v" id="d-spd">—</div></div>
+        <div class="trow"><div class="k">Dash Output</div><div class="v" id="d-dash">—</div></div>
+        <div class="trow"><div class="k">Dash EN Drain</div><div class="v" id="d-den">—</div></div>
+        <div class="trow"><div class="k">Jump EN Drain</div><div class="v" id="d-jen">—</div></div>
+        <button class="reset" id="btn-reset">Strip Frame</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="opnote"><b>OPERATOR</b><br>
+  Totals are sums of store part stats. Move / Dash / Jump / Recovery use formulas fitted to three verified hangar
+  readouts: Move = Legs Speed + 14.7 − Wt/777 (the +14.7 is believed to be your pilot's speed bonus) · Dash = Booster
+  Output + 248 − Wt/481 · Jump EN = Booster Jump × Wt/18,000 · Recovery = Core Output − part drains − ~10 weapon drain.
+  Float status: confirmed FLOAT ≤ 78,680 and SKATE ≥ 94,555; between is untested.</div>
+  </div>
+
+  <div id="v-database" style="display:none">
+    <div class="panel" data-tab="Parts Database">
+      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint">click a column header to sort · click a row to equip</span></div>
+      <div class="dbwrap"><table id="db-table"></table></div>
+    </div>
+  
+</div>
+
+<script>
+const ITEMS = [{"category": "Arms", "name": "Mekhi AR", "Series": "Light", "EN Drain": 77, "Max Heat": 102, "Cooldown Rate": 39, "Marksmanship": 14, "HP": 450, "Size": 2486, "Weight": 13298}, {"category": "Arms", "name": "Frontliner AR", "Series": "Standard", "EN Drain": 102, "Max Heat": 155, "Cooldown Rate": 26, "Marksmanship": 7, "HP": 481, "Size": 3430, "Weight": 15296}, {"category": "Arms", "name": "Rushnik AR", "Series": "Light", "EN Drain": 83, "Max Heat": 110, "Cooldown Rate": 28, "Marksmanship": 19, "HP": 466, "Size": 2702, "Weight": 13295}, {"category": "Arms", "name": "Trooper AR", "Series": "Standard", "EN Drain": 96, "Max Heat": 130, "Cooldown Rate": 32, "Marksmanship": 25, "HP": 500, "Size": 3910, "Weight": 15297}, {"category": "Arms", "name": "Boomrocker AR", "Series": "Heavy", "EN Drain": 83, "Max Heat": 127, "Cooldown Rate": 30, "Marksmanship": 12, "HP": 532, "Size": 4902, "Weight": 18295}, {"category": "Arms", "name": "Stallion AR", "Series": "Light", "EN Drain": 70, "Max Heat": 109, "Cooldown Rate": 40, "Marksmanship": 5, "HP": 359, "Size": 2486, "Weight": 13290}, {"category": "Arms", "name": "Stark AR", "Series": "Standard", "EN Drain": 96, "Max Heat": 162, "Cooldown Rate": 25, "Marksmanship": 12, "HP": 550, "Size": 4222, "Weight": 15291}, {"category": "Arms", "name": "Haskell AR", "Series": "Heavy", "EN Drain": 102, "Max Heat": 137, "Cooldown Rate": 32, "Marksmanship": 22, "HP": 640, "Size": 4854, "Weight": 18293}, {"category": "Arms", "name": "Scootwing AR", "Series": "Light", "EN Drain": 141, "Max Heat": 172, "Cooldown Rate": 25, "Marksmanship": 24, "HP": 517, "Size": 2726, "Weight": 13288}, {"category": "Arms", "name": "Davenstar AR", "Series": "Standard", "EN Drain": 160, "Max Heat": 134, "Cooldown Rate": 52, "Marksmanship": 10, "HP": 621, "Size": 4630, "Weight": 15287}, {"category": "Arms", "name": "Jaywalker AR", "Series": "Light", "EN Drain": 141, "Max Heat": 176, "Cooldown Rate": 30, "Marksmanship": 19, "HP": 588, "Size": 4734, "Weight": 14550}, {"category": "Arms", "name": "Hellfire AR", "Series": "Light", "EN Drain": 109, "Max Heat": 155, "Cooldown Rate": 36, "Marksmanship": 14, "HP": 553, "Size": 3350, "Weight": 13287}, {"category": "Arms", "name": "Bastion AR", "Series": "Standard", "EN Drain": 96, "Max Heat": 141, "Cooldown Rate": 30, "Marksmanship": 34, "HP": 572, "Size": 4534, "Weight": 15285}, {"category": "Arms", "name": "Zeeker AR", "Series": "Light", "EN Drain": 115, "Max Heat": 148, "Cooldown Rate": 32, "Marksmanship": 31, "HP": 517, "Size": 2885, "Weight": 14103}, {"category": "Arms", "name": "Blitzker AR", "Series": "Heavy", "EN Drain": 90, "Max Heat": 158, "Cooldown Rate": 33, "Marksmanship": 43, "HP": 590, "Size": 4926, "Weight": 18283}, {"category": "Arms", "name": "Spazmok AR", "Series": "Light", "EN Drain": 134, "Max Heat": 137, "Cooldown Rate": 51, "Marksmanship": 19, "HP": 517, "Size": 2654, "Weight": 13282}, {"category": "Arms", "name": "Ballistika AR", "Series": "Standard", "EN Drain": 154, "Max Heat": 189, "Cooldown Rate": 32, "Marksmanship": 31, "HP": 617, "Size": 3934, "Weight": 15281}, {"category": "Arms", "name": "Hellbent Butcher AR", "Series": "Heavy", "EN Drain": 122, "Max Heat": 144, "Cooldown Rate": 29, "Marksmanship": 55, "HP": 659, "Size": 5878, "Weight": 20280}, {"category": "Arms", "name": "Aerobolt AR", "Series": "Light", "EN Drain": 95, "Max Heat": 105, "Cooldown Rate": 47, "Marksmanship": 28, "HP": 450, "Size": 2410, "Weight": 12210}, {"category": "Arms", "name": "Sidewinder AR", "Series": "Standard", "EN Drain": 135, "Max Heat": 181, "Cooldown Rate": 36, "Marksmanship": 31, "HP": 650, "Size": 3815, "Weight": 15000}, {"category": "Arms", "name": "Vigilant AR", "Series": "Heavy", "EN Drain": 129, "Max Heat": 172, "Cooldown Rate": 31, "Marksmanship": 50, "HP": 750, "Size": 6012, "Weight": 22570}, {"category": "Arms", "name": "Centurion AR", "Series": "Light", "EN Drain": 110, "Max Heat": 137, "Cooldown Rate": 42, "Marksmanship": 29, "HP": 550, "Size": 3115, "Weight": 13120}, {"category": "Arms", "name": "Vindicator AR", "Series": "Standard", "EN Drain": 125, "Max Heat": 185, "Cooldown Rate": 34, "Marksmanship": 35, "HP": 670, "Size": 4355, "Weight": 17055}, {"category": "Arms", "name": "Guardian AR", "Series": "Heavy", "EN Drain": 145, "Max Heat": 189, "Cooldown Rate": 30, "Marksmanship": 42, "HP": 690, "Size": 5229, "Weight": 19144}, {"category": "Arms", "name": "Valkyrie AR", "Series": "Light", "EN Drain": 100, "Max Heat": 120, "Cooldown Rate": 48, "Marksmanship": 25, "HP": 500, "Size": 2300, "Weight": 12000}, {"category": "Arms", "name": "Luciferiel AR", "Series": "Standard", "EN Drain": 130, "Max Heat": 175, "Cooldown Rate": 38, "Marksmanship": 32, "HP": 600, "Size": 3510, "Weight": 15800}, {"category": "Arms", "name": "Aerene AR", "Series": "Heavy", "EN Drain": 120, "Max Heat": 183, "Cooldown Rate": 32, "Marksmanship": 30, "HP": 780, "Size": 5560, "Weight": 20880}, {"category": "Arms", "name": "Gamma Ray AR", "Series": "Light", "EN Drain": 86, "Max Heat": 130, "Cooldown Rate": 40, "Marksmanship": 30, "HP": 500, "Size": 2800, "Weight": 12600}, {"category": "Arms", "name": "Sting X AR", "Series": "Standard", "EN Drain": 130, "Max Heat": 185, "Cooldown Rate": 35, "Marksmanship": 33, "HP": 680, "Size": 4000, "Weight": 15310}, {"category": "Arms", "name": "Big Mammoth AR", "Series": "Heavy", "EN Drain": 124, "Max Heat": 175, "Cooldown Rate": 28, "Marksmanship": 46, "HP": 710, "Size": 6000, "Weight": 20000}, {"category": "Blade", "name": "Crimson Edge-A", "Series": "Blade", "Size": 750, "Range %": 5, "Overheat %": 21, "Damage %": 32, "Accuracy %": 3, "Reload %": 59, "Weight": 1380}, {"category": "Blade", "name": "Particle Blade-A", "Series": "Blade", "Size": 700, "Range %": 5, "Overheat %": 21, "Damage %": 30, "Accuracy %": 3, "Reload %": 59, "Weight": 1280}, {"category": "Blade", "name": "Annihilator-A", "Series": "Blade", "Size": 750, "Range %": 5, "Overheat %": 25, "Damage %": 34, "Accuracy %": 3, "Reload %": 59, "Weight": 1530}, {"category": "Blade", "name": "Infinity Blade-S", "Series": "Blade", "Size": 780, "Range %": 5, "Overheat %": 29, "Damage %": 33, "Accuracy %": 3, "Reload %": 59, "Weight": 1750}, {"category": "Blade", "name": "Plasma Blade-S", "Series": "Blade", "Size": 725, "Range %": 5, "Overheat %": 24, "Damage %": 28, "Accuracy %": 3, "Reload %": 59, "Weight": 1390}, {"category": "Booster", "name": "Booster", "Dash Output": 47500, "Dash EN Drain": 325, "Jump EN Drain": 280, "HP": 81, "Size": 1450, "Weight": 5100, "EN Drain": 32}, {"category": "Booster", "name": "Tomahawk-S", "Dash Output": 430, "Dash EN Drain": 385, "Jump EN Drain": 294, "HP": 80, "Size": 1650, "Weight": 5140, "EN Drain": 49}, {"category": "Booster", "name": "Missile Launcher", "Dash Output": 445, "Dash EN Drain": 351, "Jump EN Drain": 237, "HP": 81, "Size": 1620, "Weight": 5120, "EN Drain": 44}, {"category": "Booster", "name": "Dispenser", "Dash Output": 501, "Dash EN Drain": 320, "Jump EN Drain": 240, "HP": 83, "Size": 1420, "Weight": 5090, "EN Drain": 30}, {"category": "Booster", "name": "Storm Mover", "Dash Output": 485, "Dash EN Drain": 366, "Jump EN Drain": 350, "HP": 50, "Size": 1570, "Weight": 5110, "EN Drain": 71}, {"category": "Booster", "name": "Sentinel", "Dash Output": 515, "Dash EN Drain": 390, "Jump EN Drain": 290, "HP": 78, "Size": 1530, "Weight": 5050, "EN Drain": 40}, {"category": "Booster", "name": "Sonic Boomer", "Dash Output": 533, "Dash EN Drain": 386, "Jump EN Drain": 247, "HP": 78, "Size": 1230, "Weight": 5030, "EN Drain": 55}, {"category": "Booster", "name": "Laser Wing", "Dash Output": 488, "Dash EN Drain": 389, "Jump EN Drain": 280, "HP": 80, "Size": 1650, "Weight": 5190, "EN Drain": 45}, {"category": "Booster", "name": "Cyclone", "Dash Output": 538, "Dash EN Drain": 375, "Jump EN Drain": 240, "HP": 60, "Size": 1150, "Weight": 4980, "EN Drain": 43}, {"category": "Booster", "name": "Maverick", "Dash Output": 518, "Dash EN Drain": 330, "Jump EN Drain": 240, "HP": 95, "Size": 1580, "Weight": 5180, "EN Drain": 45}, {"category": "Booster", "name": "Argus", "Dash Output": 485, "Dash EN Drain": 355, "Jump EN Drain": 265, "HP": 180, "Size": 1700, "Weight": 5300, "EN Drain": 58}, {"category": "Booster", "name": "Fever Rain", "Dash Output": 493, "Dash EN Drain": 370, "Jump EN Drain": 241, "HP": 75, "Size": 1530, "Weight": 5165, "EN Drain": 47}, {"category": "Booster", "name": "Flanker", "Dash Output": 510, "Dash EN Drain": 355, "Jump EN Drain": 240, "HP": 70, "Size": 1265, "Weight": 5100, "EN Drain": 48}, {"category": "Booster", "name": "Prowler", "Dash Output": 500, "Dash EN Drain": 315, "Jump EN Drain": 240, "HP": 90, "Size": 1480, "Weight": 5100, "EN Drain": 38}, {"category": "Booster", "name": "Drift Tail", "Dash Output": 468, "Dash EN Drain": 390, "Jump EN Drain": 275, "HP": 250, "Size": 1765, "Weight": 5396, "EN Drain": 53}, {"category": "Booster", "name": "Steel Heart", "Dash Output": 520, "Dash EN Drain": 370, "Jump EN Drain": 240, "HP": 65, "Size": 1050, "Weight": 4850, "EN Drain": 40}, {"category": "Booster", "name": "Legionnaire Wing", "Dash Output": 495, "Dash EN Drain": 330, "Jump EN Drain": 260, "HP": 85, "Size": 1150, "Weight": 4900, "EN Drain": 32}, {"category": "Booster", "name": "Tonei Boomer", "Dash Output": 462, "Dash EN Drain": 401, "Jump EN Drain": 287, "HP": 320, "Size": 1310, "Weight": 4998, "EN Drain": 58}, {"category": "Booster", "name": "Scorpion-S", "Dash Output": 490, "Dash EN Drain": 370, "Jump EN Drain": 270, "HP": 40, "Size": 1500, "Weight": 5250, "EN Drain": 45}, {"category": "Booster", "name": "Strike Force", "Dash Output": 490, "Dash EN Drain": 375, "Jump EN Drain": 240, "HP": 130, "Size": 1750, "Weight": 5450, "EN Drain": 44}, {"category": "Booster", "name": "Dispenser-S", "Dash Output": 485, "Dash EN Drain": 350, "Jump EN Drain": 260, "HP": 70, "Size": 1500, "Weight": 5500, "EN Drain": 33}, {"category": "Cannon", "name": "Poseidon-A", "Series": "Cannon", "Size": 2433, "Range %": 54, "Overheat %": 53, "Damage %": 91, "Accuracy %": 78, "Reload %": 76, "Weight": 45000}, {"category": "Cannon", "name": "Colony Burster-A", "Series": "Cannon", "Size": 2500, "Range %": 66, "Overheat %": 61, "Damage %": 93, "Accuracy %": 80, "Reload %": 76, "Weight": 45000}, {"category": "Cannon", "name": "Apogee-A", "Series": "Cannon", "Size": 3200, "Range %": 64, "Overheat %": 62, "Damage %": 96, "Accuracy %": 82, "Reload %": 76, "Weight": 47500}, {"category": "Cannon", "name": "Destroyer-A", "Series": "Cannon", "Size": 2561, "Range %": 54, "Overheat %": 53, "Damage %": 89, "Accuracy %": 78, "Reload %": 76, "Weight": 45000}, {"category": "Cannon", "name": "Omega Tristone Launcher-A", "Series": "Cannon", "Size": 2600, "Range %": 63, "Overheat %": 58, "Damage %": 92, "Accuracy %": 76, "Reload %": 76, "Weight": 45000}, {"category": "Cannon", "name": "Siege Caster-A", "Series": "Cannon", "Size": 3350, "Range %": 64, "Overheat %": 62, "Damage %": 95, "Accuracy %": 82, "Reload %": 76, "Weight": 49000}, {"category": "Cannon", "name": "Red Eye-S", "Series": "Cannon", "Size": 3100, "Range %": 64, "Overheat %": 64, "Damage %": 96, "Accuracy %": 78, "Reload %": 72, "Weight": 46000}, {"category": "Cannon", "name": "Flash Fire-S", "Series": "Cannon", "Size": 3150, "Range %": 66, "Overheat %": 63, "Damage %": 96, "Accuracy %": 78, "Reload %": 72, "Weight": 47500}, {"category": "Cannon", "name": "Plasma Cannon-S", "Series": "Cannon", "Size": 3000, "Range %": 64, "Overheat %": 62, "Damage %": 96, "Accuracy %": 78, "Reload %": 72, "Weight": 45000}, {"category": "Cannon", "name": "Crosshair-S", "Series": "Cannon", "Size": 3000, "Range %": 67, "Overheat %": 71, "Damage %": 96, "Accuracy %": 59, "Reload %": 96, "Weight": 46500}, {"category": "Core", "name": "Mekhi CS", "Series": "Light", "EN Drain": 98, "EN": 2150, "EN Output Rate": 696, "Min. EN Required": 1314, "HP": 800, "Size": 5310, "Weight": 22160}, {"category": "Core", "name": "Frontliner CS", "Series": "Standard", "EN Drain": 92, "EN": 2147, "EN Output Rate": 650, "Min. EN Required": 1269, "HP": 854, "Size": 6630, "Weight": 25493}, {"category": "Core", "name": "Rushnik CS", "Series": "Light", "EN Drain": 106, "EN": 2286, "EN Output Rate": 787, "Min. EN Required": 1448, "HP": 832, "Size": 5430, "Weight": 22162}, {"category": "Core", "name": "Trooper CS", "Series": "Standard", "EN Drain": 100, "EN": 2200, "EN Output Rate": 810, "Min. EN Required": 1550, "HP": 900, "Size": 6510, "Weight": 25492}, {"category": "Core", "name": "Boomrocker CS", "Series": "Heavy", "EN Drain": 102, "EN": 2261, "EN Output Rate": 663, "Min. EN Required": 1358, "HP": 942, "Size": 8070, "Weight": 30497}, {"category": "Core", "name": "Stallion CS", "Series": "Light", "EN Drain": 170, "EN": 2216, "EN Output Rate": 878, "Min. EN Required": 1538, "HP": 732, "Size": 5070, "Weight": 22151}, {"category": "Core", "name": "Stark CS", "Series": "Standard", "EN Drain": 168, "EN": 2366, "EN Output Rate": 838, "Min. EN Required": 1762, "HP": 885, "Size": 6870, "Weight": 25486}, {"category": "Core", "name": "Haskell CS", "Series": "Heavy", "EN Drain": 174, "EN": 2419, "EN Output Rate": 770, "Min. EN Required": 1582, "HP": 969, "Size": 5190, "Weight": 30488}, {"category": "Core", "name": "Scootwing CS", "Series": "Light", "EN Drain": 160, "EN": 2508, "EN Output Rate": 785, "Min. EN Required": 1762, "HP": 920, "Size": 5190, "Weight": 22142}, {"category": "Core", "name": "Davenstar CS", "Series": "Standard", "EN Drain": 160, "EN": 2594, "EN Output Rate": 790, "Min. EN Required": 1896, "HP": 1258, "Size": 6630, "Weight": 25481}, {"category": "Core", "name": "Jaywalker CS", "Series": "Light", "EN Drain": 124, "EN": 2972, "EN Output Rate": 768, "Min. EN Required": 1388, "HP": 965, "Size": 4855, "Weight": 21860}, {"category": "Core", "name": "Hellfire CS", "Series": "Light", "EN Drain": 160, "EN": 2455, "EN Output Rate": 790, "Min. EN Required": 1806, "HP": 1258, "Size": 4710, "Weight": 22146}, {"category": "Core", "name": "Bastion CS", "Series": "Standard", "EN Drain": 173, "EN": 2506, "EN Output Rate": 896, "Min. EN Required": 1582, "HP": 977, "Size": 6390, "Weight": 25477}, {"category": "Core", "name": "Zeeker CS", "Series": "Light", "EN Drain": 179, "EN": 2764, "EN Output Rate": 916, "Min. EN Required": 1672, "HP": 980, "Size": 5350, "Weight": 23851}, {"category": "Core", "name": "Blitzker CS", "Series": "Heavy", "EN Drain": 165, "EN": 2778, "EN Output Rate": 904, "Min. EN Required": 1403, "HP": 1124, "Size": 7950, "Weight": 30470}, {"category": "Core", "name": "Spazmok CS", "Series": "Light", "EN Drain": 90, "EN": 2283, "EN Output Rate": 953, "Min. EN Required": 1851, "HP": 960, "Size": 5190, "Weight": 22136}, {"category": "Core", "name": "Ballistika CS", "Series": "Standard", "EN Drain": 174, "EN": 3025, "EN Output Rate": 886, "Min. EN Required": 1717, "HP": 1018, "Size": 7230, "Weight": 25468}, {"category": "Core", "name": "Hellbent Butcher CS", "Series": "Heavy", "EN Drain": 161, "EN": 3126, "EN Output Rate": 856, "Min. EN Required": 1941, "HP": 1335, "Size": 8790, "Weight": 35468}, {"category": "Core", "name": "Aerobolt CS", "Series": "Light", "EN Drain": 96, "EN": 2800, "EN Output Rate": 925, "Min. EN Required": 1650, "HP": 780, "Size": 4980, "Weight": 21260}, {"category": "Core", "name": "Sidewinder CS", "Series": "Standard", "EN Drain": 150, "EN": 3120, "EN Output Rate": 880, "Min. EN Required": 1725, "HP": 1150, "Size": 7450, "Weight": 25890}, {"category": "Core", "name": "Vigilant CS", "Series": "Heavy", "EN Drain": 168, "EN": 3250, "EN Output Rate": 862, "Min. EN Required": 1900, "HP": 1550, "Size": 9200, "Weight": 38625}, {"category": "Core", "name": "Centurion CS", "Series": "Light", "EN Drain": 112, "EN": 2900, "EN Output Rate": 900, "Min. EN Required": 1680, "HP": 920, "Size": 6015, "Weight": 22000}, {"category": "Core", "name": "Vindicator CS", "Series": "Standard", "EN Drain": 140, "EN": 3000, "EN Output Rate": 883, "Min. EN Required": 1750, "HP": 1200, "Size": 7850, "Weight": 27480}, {"category": "Core", "name": "Guardian CS", "Series": "Heavy", "EN Drain": 161, "EN": 3100, "EN Output Rate": 870, "Min. EN Required": 1790, "HP": 1350, "Size": 8358, "Weight": 33520}, {"category": "Core", "name": "Valkyrie CS", "Series": "Light", "EN Drain": 93, "EN": 2700, "EN Output Rate": 935, "Min. EN Required": 1600, "HP": 810, "Size": 4825, "Weight": 20580}, {"category": "Core", "name": "Luciferiel CS", "Series": "Standard", "EN Drain": 108, "EN": 2850, "EN Output Rate": 895, "Min. EN Required": 1680, "HP": 1110, "Size": 6310, "Weight": 23650}, {"category": "Core", "name": "Aerene CS", "Series": "Heavy", "EN Drain": 128, "EN": 3000, "EN Output Rate": 875, "Min. EN Required": 1800, "HP": 1400, "Size": 8208, "Weight": 31450}, {"category": "Core", "name": "Gamma Ray CS", "Series": "Light", "EN Drain": 90, "EN": 2800, "EN Output Rate": 920, "Min. EN Required": 1650, "HP": 850, "Size": 5650, "Weight": 20800}, {"category": "Core", "name": "Sting X CS", "Series": "Standard", "EN Drain": 145, "EN": 3000, "EN Output Rate": 890, "Min. EN Required": 1750, "HP": 1180, "Size": 7200, "Weight": 25200}, {"category": "Core", "name": "Big Mammoth CS", "Series": "Heavy", "EN Drain": 155, "EN": 3150, "EN Output Rate": 868, "Min. EN Required": 1850, "HP": 1450, "Size": 8500, "Weight": 35000}, {"category": "Head", "name": "Mekhi HD", "Series": "Light", "EN Drain": 45, "SP": 960, "MPU": 2, "Scan Range": 1360, "HP": 160, "Size": 568, "Weight": 4430}, {"category": "Head", "name": "Frontliner HD", "Series": "Standard", "EN Drain": 77, "SP": 1110, "MPU": 1, "Scan Range": 1200, "HP": 195, "Size": 512, "Weight": 5096}, {"category": "Head", "name": "Rushnik HD", "Series": "Light", "EN Drain": 109, "SP": 1410, "MPU": 1, "Scan Range": 1520, "HP": 165, "Size": 496, "Weight": 4428}, {"category": "Head", "name": "Trooper HD", "Series": "Standard", "EN Drain": 115, "SP": 1200, "MPU": 2, "Scan Range": 1680, "HP": 170, "Size": 152, "Weight": 5099}, {"category": "Head", "name": "Boomrocker HD", "Series": "Heavy", "EN Drain": 102, "SP": 960, "MPU": 2, "Scan Range": 1160, "HP": 210, "Size": 264, "Weight": 6096}, {"category": "Head", "name": "Stallion HD", "Series": "Light", "EN Drain": 102, "SP": 1400, "MPU": 2, "Scan Range": 1480, "HP": 160, "Size": 232, "Weight": 4423}, {"category": "Head", "name": "Stark HD", "Series": "Standard", "EN Drain": 115, "SP": 1300, "MPU": 2, "Scan Range": 1520, "HP": 185, "Size": 368, "Weight": 5091}, {"category": "Head", "name": "Haskell HD", "Series": "Heavy", "EN Drain": 58, "SP": 1630, "MPU": 3, "Scan Range": 1300, "HP": 226, "Size": 1584, "Weight": 6093}, {"category": "Head", "name": "Scootwing HD", "Series": "Light", "EN Drain": 128, "SP": 1635, "MPU": 3, "Scan Range": 1600, "HP": 182, "Size": 640, "Weight": 4421}, {"category": "Head", "name": "Davenstar HD", "Series": "Standard", "EN Drain": 102, "SP": 1700, "MPU": 2, "Scan Range": 1350, "HP": 224, "Size": 656, "Weight": 5087}, {"category": "Head", "name": "Jaywalker HD", "Series": "Light", "EN Drain": 78, "SP": 2495, "MPU": 2, "Scan Range": 1650, "HP": 243, "Size": 480, "Weight": 4260}, {"category": "Head", "name": "Hellfire HD", "Series": "Light", "EN Drain": 115, "SP": 2360, "MPU": 3, "Scan Range": 1700, "HP": 194, "Size": 616, "Weight": 4419}, {"category": "Head", "name": "Bastion HD", "Series": "Standard", "EN Drain": 166, "SP": 1825, "MPU": 2, "Scan Range": 1450, "HP": 420, "Size": 152, "Weight": 5086}, {"category": "Head", "name": "Zeeker HD", "Series": "Light", "EN Drain": 122, "SP": 2400, "MPU": 2, "Scan Range": 1850, "HP": 225, "Size": 450, "Weight": 4360}, {"category": "Head", "name": "Blitzker HD", "Series": "Heavy", "EN Drain": 166, "SP": 1825, "MPU": 4, "Scan Range": 1550, "HP": 231, "Size": 384, "Weight": 6083}, {"category": "Head", "name": "Spazmok HD", "Series": "Light", "EN Drain": 83, "SP": 2560, "MPU": 4, "Scan Range": 1720, "HP": 205, "Size": 928, "Weight": 4250}, {"category": "Head", "name": "Ballistika HD", "Series": "Standard", "EN Drain": 147, "SP": 1635, "MPU": 2, "Scan Range": 1900, "HP": 267, "Size": 440, "Weight": 5080}, {"category": "Head", "name": "Hellbent Butcher HD", "Series": "Heavy", "EN Drain": 172, "SP": 2000, "MPU": 4, "Scan Range": 1650, "HP": 277, "Size": 1008, "Weight": 6081}, {"category": "Head", "name": "Aerobolt HD", "Series": "Light", "EN Drain": 85, "SP": 2150, "MPU": 2, "Scan Range": 1800, "HP": 160, "Size": 225, "Weight": 4100}, {"category": "Head", "name": "Sidewinder HD", "Series": "Standard", "EN Drain": 110, "SP": 2400, "MPU": 4, "Scan Range": 1900, "HP": 225, "Size": 485, "Weight": 5000}, {"category": "Head", "name": "Vigilant HD", "Series": "Heavy", "EN Drain": 180, "SP": 2660, "MPU": 3, "Scan Range": 1750, "HP": 300, "Size": 1308, "Weight": 6380}, {"category": "Head", "name": "Centurion HD", "Series": "Light", "EN Drain": 92, "SP": 2275, "MPU": 3, "Scan Range": 1850, "HP": 180, "Size": 355, "Weight": 4350}, {"category": "Head", "name": "Vindicator HD", "Series": "Standard", "EN Drain": 100, "SP": 2450, "MPU": 4, "Scan Range": 1900, "HP": 240, "Size": 698, "Weight": 5321}, {"category": "Head", "name": "Guardian HD", "Series": "Heavy", "EN Drain": 138, "SP": 2550, "MPU": 3, "Scan Range": 1950, "HP": 275, "Size": 968, "Weight": 5600}, {"category": "Head", "name": "Valkyrie HD", "Series": "Light", "EN Drain": 87, "SP": 2200, "MPU": 2, "Scan Range": 1950, "HP": 170, "Size": 250, "Weight": 4000}, {"category": "Head", "name": "Luciferiel HD", "Series": "Standard", "EN Drain": 107, "SP": 2450, "MPU": 3, "Scan Range": 2050, "HP": 220, "Size": 550, "Weight": 4800}, {"category": "Head", "name": "Aerene HD", "Series": "Heavy", "EN Drain": 153, "SP": 2600, "MPU": 4, "Scan Range": 1900, "HP": 250, "Size": 880, "Weight": 5250}, {"category": "Head", "name": "Gamma Ray HD", "Series": "Light", "EN Drain": 80, "SP": 2000, "MPU": 2, "Scan Range": 1700, "HP": 170, "Size": 300, "Weight": 4300}, {"category": "Head", "name": "Sting X HD", "Series": "Standard", "EN Drain": 105, "SP": 2250, "MPU": 3, "Scan Range": 1900, "HP": 235, "Size": 455, "Weight": 4955}, {"category": "Head", "name": "Big Mammoth HD", "Series": "Heavy", "EN Drain": 130, "SP": 2300, "MPU": 3, "Scan Range": 2200, "HP": 280, "Size": 930, "Weight": 5300}, {"category": "Legs", "name": "Mekhi LE", "Series": "Light", "EN Drain": 45, "Basic Speed": 601, "Capacity": 60000, "Deceleration": 48000, "HP": 600, "Size": 4420, "Weight": 19994}, {"category": "Legs", "name": "Frontliner LE", "Series": "Standard", "EN Drain": 50, "Basic Speed": 453, "Capacity": 195000, "Deceleration": 67200, "HP": 650, "Size": 5660, "Weight": 21493}, {"category": "Legs", "name": "Rushnik LE", "Series": "Light", "EN Drain": 43, "Basic Speed": 600, "Capacity": 60000, "Deceleration": 52857, "HP": 665, "Size": 4420, "Weight": 19992}, {"category": "Legs", "name": "Trooper LE", "Series": "Standard", "EN Drain": 50, "Basic Speed": 457, "Capacity": 195000, "Deceleration": 64000, "HP": 650, "Size": 6140, "Weight": 21496}, {"category": "Legs", "name": "Boomrocker LE", "Series": "Heavy", "EN Drain": 146, "Basic Speed": 415, "Capacity": 390000, "Deceleration": 70400, "HP": 818, "Size": 7020, "Weight": 22995}, {"category": "Legs", "name": "Stallion LE", "Series": "Light", "EN Drain": 47, "Basic Speed": 603, "Capacity": 60000, "Deceleration": 54400, "HP": 565, "Size": 4420, "Weight": 19985}, {"category": "Legs", "name": "Stark LE", "Series": "Standard", "EN Drain": 30, "Basic Speed": 460, "Capacity": 195000, "Deceleration": 64000, "HP": 685, "Size": 5780, "Weight": 21487}, {"category": "Legs", "name": "Haskell LE", "Series": "Heavy", "EN Drain": 39, "Basic Speed": 417, "Capacity": 390000, "Deceleration": 67200, "HP": 765, "Size": 7020, "Weight": 22988}, {"category": "Legs", "name": "Scootwing LE", "Series": "Light", "EN Drain": 25, "Basic Speed": 609, "Capacity": 60000, "Deceleration": 73600, "HP": 677, "Size": 4540, "Weight": 19976}, {"category": "Legs", "name": "Davenstar LE", "Series": "Standard", "EN Drain": 50, "Basic Speed": 462, "Capacity": 195000, "Deceleration": 64000, "HP": 748, "Size": 5660, "Weight": 21481}, {"category": "Legs", "name": "Jaywalker LE", "Series": "Light", "EN Drain": 43, "Basic Speed": 610, "Capacity": 60000, "Deceleration": 92800, "HP": 701, "Size": 6120, "Weight": 22975}, {"category": "Legs", "name": "Hellfire LE", "Series": "Light", "EN Drain": 35, "Basic Speed": 608, "Capacity": 60000, "Deceleration": 60800, "HP": 738, "Size": 4300, "Weight": 19981}, {"category": "Legs", "name": "Bastion LE", "Series": "Standard", "EN Drain": 28, "Basic Speed": 461, "Capacity": 195000, "Deceleration": 80000, "HP": 774, "Size": 5660, "Weight": 21476}, {"category": "Legs", "name": "Zeeker LE", "Series": "Light", "EN Drain": 20, "Basic Speed": 611, "Capacity": 60000, "Deceleration": 80000, "HP": 664, "Size": 4180, "Weight": 21553}, {"category": "Legs", "name": "Blitzker LE", "Series": "Heavy", "EN Drain": 50, "Basic Speed": 426, "Capacity": 390000, "Deceleration": 76800, "HP": 811, "Size": 6900, "Weight": 22972}, {"category": "Legs", "name": "Spazmok LE", "Series": "Light", "EN Drain": 15, "Basic Speed": 613, "Capacity": 60000, "Deceleration": 92800, "HP": 645, "Size": 4540, "Weight": 19970}, {"category": "Legs", "name": "Ballistika LE", "Series": "Standard", "EN Drain": 33, "Basic Speed": 464, "Capacity": 195000, "Deceleration": 112000, "HP": 763, "Size": 5780, "Weight": 21469}, {"category": "Legs", "name": "Hellbent Butcher LE", "Series": "Heavy", "EN Drain": 50, "Basic Speed": 425, "Capacity": 390000, "Deceleration": 89600, "HP": 878, "Size": 8900, "Weight": 25018}, {"category": "Legs", "name": "Aerobolt LE", "Series": "Light", "EN Drain": 23, "Basic Speed": 620, "Capacity": 62000, "Deceleration": 93300, "HP": 550, "Size": 4210, "Weight": 18665}, {"category": "Legs", "name": "Sidewinder LE", "Series": "Standard", "EN Drain": 42, "Basic Speed": 480, "Capacity": 198000, "Deceleration": 115000, "HP": 800, "Size": 5810, "Weight": 21230}, {"category": "Legs", "name": "Vigilant LE", "Series": "Heavy", "EN Drain": 75, "Basic Speed": 410, "Capacity": 420000, "Deceleration": 90000, "HP": 900, "Size": 9000, "Weight": 26208}, {"category": "Legs", "name": "Centurion LE", "Series": "Light", "EN Drain": 28, "Basic Speed": 590, "Capacity": 73000, "Deceleration": 94500, "HP": 650, "Size": 4620, "Weight": 19392}, {"category": "Legs", "name": "Vindicator LE", "Series": "Standard", "EN Drain": 30, "Basic Speed": 469, "Capacity": 215000, "Deceleration": 110000, "HP": 820, "Size": 5900, "Weight": 22699}, {"category": "Legs", "name": "Guardian LE", "Series": "Heavy", "EN Drain": 51, "Basic Speed": 440, "Capacity": 350000, "Deceleration": 90500, "HP": 865, "Size": 7380, "Weight": 24550}, {"category": "Legs", "name": "Valkyrie LE", "Series": "Light", "EN Drain": 25, "Basic Speed": 600, "Capacity": 70000, "Deceleration": 95000, "HP": 600, "Size": 4380, "Weight": 19000}, {"category": "Legs", "name": "Luciferiel LE", "Series": "Standard", "EN Drain": 45, "Basic Speed": 470, "Capacity": 195000, "Deceleration": 110000, "HP": 830, "Size": 5500, "Weight": 21545}, {"category": "Legs", "name": "Aerene LE", "Series": "Heavy", "EN Drain": 75, "Basic Speed": 425, "Capacity": 380000, "Deceleration": 90000, "HP": 880, "Size": 8500, "Weight": 24511}, {"category": "Legs", "name": "Gamma Ray LE", "Series": "Light", "EN Drain": 20, "Basic Speed": 600, "Capacity": 70000, "Deceleration": 93300, "HP": 620, "Size": 4350, "Weight": 19000}, {"category": "Legs", "name": "Sting X LE", "Series": "Standard", "EN Drain": 38, "Basic Speed": 473, "Capacity": 200000, "Deceleration": 114000, "HP": 835, "Size": 6000, "Weight": 22000}, {"category": "Legs", "name": "Big Mammoth LE", "Series": "Heavy", "EN Drain": 50, "Basic Speed": 420, "Capacity": 400000, "Deceleration": 90000, "HP": 880, "Size": 8000, "Weight": 25650}, {"category": "Rectifier", "name": "Core Charger-A", "Series": "Rectifier", "Size": 856, "Range %": 18, "Overheat %": 45, "Damage %": 3, "Accuracy %": 95, "Reload %": 96, "Weight": 10000}, {"category": "Rectifier", "name": "Polymer Array-A", "Series": "Rectifier", "Size": 856, "Range %": 24, "Overheat %": 39, "Damage %": 3, "Accuracy %": 95, "Reload %": 59, "Weight": 10050}, {"category": "Rectifier", "name": "Reconstructor-A", "Series": "Rectifier", "Size": 1230, "Range %": 21, "Overheat %": 55, "Damage %": 3, "Accuracy %": 82, "Reload %": 96, "Weight": 12000}, {"category": "Rectifier", "name": "Wavestreamer-S", "Series": "Rectifier", "Size": 900, "Range %": 21, "Overheat %": 32, "Damage %": 3, "Accuracy %": 72, "Reload %": 45, "Weight": 10800}, {"category": "Rectifier", "name": "Plasma Injector-S", "Series": "Rectifier", "Size": 1015, "Range %": 24, "Overheat %": 17, "Damage %": 3, "Accuracy %": 87, "Reload %": 21, "Weight": 10000}, {"category": "Rifle", "name": "Marauder-A", "Series": "Rifle", "Size": 1011, "Range %": 36, "Overheat %": 25, "Damage %": 22, "Accuracy %": 68, "Reload %": 49, "Weight": 11500}, {"category": "Rifle", "name": "Zeus Persuader-A", "Series": "Rifle", "Size": 1011, "Range %": 36, "Overheat %": 38, "Damage %": 29, "Accuracy %": 59, "Reload %": 68, "Weight": 11500}, {"category": "Rifle", "name": "Iron Curtain-A", "Series": "Rifle", "Size": 1120, "Range %": 37, "Overheat %": 26, "Damage %": 26, "Accuracy %": 59, "Reload %": 49, "Weight": 9500}, {"category": "Rifle", "name": "Blue Tempest-S", "Series": "Rifle", "Size": 1050, "Range %": 34, "Overheat %": 25, "Damage %": 24, "Accuracy %": 63, "Reload %": 39, "Weight": 9320}, {"category": "Rifle", "name": "Plasma Marauder-S", "Series": "Rifle", "Size": 1150, "Range %": 34, "Overheat %": 25, "Damage %": 29, "Accuracy %": 63, "Reload %": 45, "Weight": 9400}, {"category": "Rocket", "name": "Death Hurler-A", "Series": "Rocket", "Size": 3016, "Range %": 57, "Overheat %": 34, "Damage %": 67, "Accuracy %": 49, "Reload %": 59, "Weight": 34000}, {"category": "Rocket", "name": "Blitz Rocket Launcher-A", "Series": "Rocket", "Size": 3123, "Range %": 61, "Overheat %": 34, "Damage %": 55, "Accuracy %": 49, "Reload %": 49, "Weight": 34000}, {"category": "Rocket", "name": "Rocket Roulette-A", "Series": "Rocket", "Size": 3123, "Range %": 68, "Overheat %": 42, "Damage %": 74, "Accuracy %": 49, "Reload %": 68, "Weight": 35200}, {"category": "Rocket", "name": "Azure Striker-S", "Series": "Rocket", "Size": 3050, "Range %": 62, "Overheat %": 38, "Damage %": 57, "Accuracy %": 49, "Reload %": 49, "Weight": 34500}, {"category": "Rocket", "name": "Plasma Rocket-S", "Series": "Rocket", "Size": 3123, "Range %": 61, "Overheat %": 38, "Damage %": 58, "Accuracy %": 49, "Reload %": 49, "Weight": 35200}, {"category": "SMG", "name": "Planet Eagle-A", "Series": "SMG", "Size": 799, "Range %": 22, "Overheat %": 13, "Damage %": 13, "Accuracy %": 54, "Reload %": 21, "Weight": 6500}, {"category": "SMG", "name": "Beam Spitter-A", "Series": "SMG", "Size": 863, "Range %": 22, "Overheat %": 9, "Damage %": 8, "Accuracy %": 57, "Reload %": 12, "Weight": 6500}, {"category": "SMG", "name": "Echo Blaster-A", "Series": "SMG", "Size": 863, "Range %": 22, "Overheat %": 13, "Damage %": 14, "Accuracy %": 43, "Reload %": 21, "Weight": 7200}, {"category": "SMG", "name": "Zephyr Magnum-S", "Series": "SMG", "Size": 900, "Range %": 22, "Overheat %": 16, "Damage %": 16, "Accuracy %": 39, "Reload %": 21, "Weight": 8000}, {"category": "SMG", "name": "Plasma Spitter-S", "Series": "SMG", "Size": 895, "Range %": 22, "Overheat %": 9, "Damage %": 9, "Accuracy %": 49, "Reload %": 12, "Weight": 7000}, {"category": "Shield", "name": "Defender-A", "Series": "Shield", "Size": 925, "Range %": 3, "Overheat %": 14, "Damage %": 3, "Accuracy %": 3, "Reload %": 59, "Weight": 1450}, {"category": "Shield", "name": "Force Shield-A", "Series": "Shield", "Size": 890, "Range %": 3, "Overheat %": 16, "Damage %": 3, "Accuracy %": 3, "Reload %": 59, "Weight": 1350}, {"category": "Shield", "name": "Saint Guardian-A", "Series": "Shield", "Size": 850, "Range %": 3, "Overheat %": 14, "Damage %": 3, "Accuracy %": 3, "Reload %": 59, "Weight": 1280}, {"category": "Shield", "name": "Aegis-S", "Series": "Shield", "Size": 1180, "Range %": 3, "Overheat %": 14, "Damage %": 3, "Accuracy %": 3, "Reload %": 59, "Weight": 1850}, {"category": "Shield", "name": "Plasma Shield-S", "Series": "Shield", "Size": 1000, "Range %": 3, "Overheat %": 14, "Damage %": 3, "Accuracy %": 3, "Reload %": 59, "Weight": 1550}, {"category": "Shotgun", "name": "Spatter Gun-A", "Series": "Shotgun", "Size": 1178, "Range %": 20, "Overheat %": 32, "Damage %": 38, "Accuracy %": 59, "Reload %": 54, "Weight": 6550}, {"category": "Shotgun", "name": "Hellrazor-A", "Series": "Shotgun", "Size": 1178, "Range %": 20, "Overheat %": 33, "Damage %": 37, "Accuracy %": 59, "Reload %": 68, "Weight": 6600}, {"category": "Shotgun", "name": "Dazzler-A", "Series": "Shotgun", "Size": 996, "Range %": 21, "Overheat %": 34, "Damage %": 33, "Accuracy %": 54, "Reload %": 54, "Weight": 8200}, {"category": "Shotgun", "name": "Havoc Fury-S", "Series": "Shotgun", "Size": 1000, "Range %": 20, "Overheat %": 29, "Damage %": 30, "Accuracy %": 54, "Reload %": 45, "Weight": 8250}, {"category": "Shotgun", "name": "Plasma Stainer-S", "Series": "Shotgun", "Size": 996, "Range %": 21, "Overheat %": 33, "Damage %": 37, "Accuracy %": 59, "Reload %": 49, "Weight": 8200}, {"category": "Spear", "name": "Penetrator-A", "Series": "Spear", "Size": 455, "Range %": 5, "Overheat %": 25, "Damage %": 42, "Accuracy %": 3, "Reload %": 59, "Weight": 1350}, {"category": "Spear", "name": "Metal Helix-A", "Series": "Spear", "Size": 476, "Range %": 5, "Overheat %": 24, "Damage %": 38, "Accuracy %": 3, "Reload %": 59, "Weight": 1600}, {"category": "Spear", "name": "Hellion Lance-A", "Series": "Spear", "Size": 460, "Range %": 5, "Overheat %": 26, "Damage %": 43, "Accuracy %": 3, "Reload %": 59, "Weight": 1550}, {"category": "Spear", "name": "Hyperion-S", "Series": "Spear", "Size": 475, "Range %": 5, "Overheat %": 28, "Damage %": 45, "Accuracy %": 3, "Reload %": 59, "Weight": 1660}, {"category": "Spear", "name": "Wing Spread-S", "Series": "Spear", "Size": 480, "Range %": 5, "Overheat %": 30, "Damage %": 45, "Accuracy %": 3, "Reload %": 59, "Weight": 1600}];
+
+const byCat = {};
+for (const it of ITEMS) (byCat[it.category] ??= []).push(it);
+const find = (cat, name) => name ? byCat[cat].find(i => i.name === name) : null;
+const findW = name => name ? ITEMS.find(i => i.name === name && WEAPON_CATS.includes(i.category)) : null;
+const WEAPON_CATS = ['SMG','Rifle','Shotgun','Cannon','Rocket','Blade','Spear','Shield','Rectifier'];
+const fmt = n => n.toLocaleString('en-US');
+
+function fillPartSelect(sel, cat){
+  sel.innerHTML = '<option value="">— empty —</option>' +
+    byCat[cat].map(i => `<option>${i.name}</option>`).join('');
+}
+function fillWeaponSelect(sel){
+  let html = '<option value="">— empty —</option>';
+  for (const c of WEAPON_CATS){
+    html += `<optgroup label="${c}">` + byCat[c].map(i => `<option>${i.name}</option>`).join('') + '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+const partSlots = [
+  ['s-head','Head','m-head'], ['s-core','Core','m-core'], ['s-arms','Arms','m-arms'],
+  ['s-legs','Legs','m-legs'], ['s-booster','Booster','m-booster']
+];
+const weapSlots = [['s-w1l','m-w1l'],['s-w1r','m-w1r'],['s-w2l','m-w2l'],['s-w2r','m-w2r']];
+
+for (const [id,cat] of partSlots) fillPartSelect(document.getElementById(id), cat);
+for (const [id] of weapSlots) fillWeaponSelect(document.getElementById(id));
+
+function update(){
+  let hp=0, en=0, size=0, wt=0;
+  // parts
+  for (const [id,cat,mid] of partSlots){
+    const it = find(cat, document.getElementById(id).value);
+    const mini = document.getElementById(mid);
+    if (!it){ mini.textContent=''; continue; }
+    hp += it.HP ?? 0;
+    en += it['EN Drain'] ?? 0;
+    size += it.Size ?? 0;
+    wt += it.Weight ?? 0;
+    mini.innerHTML = (it.Series ? it.Series+' · ' : '') + 'WT <b>'+fmt(it.Weight)+'</b><br>EN <b>'+(it['EN Drain']??0)+'</b>';
+  }
+  // weapons
+  const equipped = [];
+  for (const [id,mid] of weapSlots){
+    const it = findW(document.getElementById(id).value);
+    const mini = document.getElementById(mid);
+    if (!it){ mini.textContent=''; continue; }
+    size += it.Size ?? 0;
+    wt += it.Weight ?? 0;
+    equipped.push(it);
+    mini.innerHTML = it.category + '<br>WT <b>' + fmt(it.Weight) + '</b>';
+  }
+
+  document.getElementById('t-hp').textContent = fmt(hp);
+  document.getElementById('t-en').textContent = fmt(en);
+  document.getElementById('t-size').textContent = fmt(size);
+  document.getElementById('t-wt').textContent = fmt(wt);
+
+  const legs = find('Legs', document.getElementById('s-legs').value);
+  const core = find('Core', document.getElementById('s-core').value);
+  const head = find('Head', document.getElementById('s-head').value);
+  const arms = find('Arms', document.getElementById('s-arms').value);
+  const boost = find('Booster', document.getElementById('s-booster').value);
+
+  const allowEl = document.getElementById('allow');
+  const allow = allowEl ? (parseInt(allowEl.value)||0) : 0;
+  const totalW = wt + allow;
+  document.getElementById('t-wt').textContent = fmt(totalW);
+
+  setGauge('g-wt', totalW, legs ? legs.Capacity : 0, 'capacity');
+  setGauge('g-en', en, core ? core['EN Output Rate'] : 0, 'output');
+
+  const dv = derived(totalW, legs, core, boost, en, equipped.length>0 || allow>0);
+  setD('t-move', dv.move); setD('t-dash', dv.dash); setD('t-jump', dv.jump); setD('t-recov', dv.recov);
+  const fEl = document.getElementById('t-float');
+  if (!legs){ fEl.innerHTML = '—'; }
+  else if (totalW <= FLOAT_MAX) fEl.innerHTML = '<span class="badge float">FLOAT ✓</span>';
+  else if (totalW >= SKATE_MIN) fEl.innerHTML = '<span class="badge skate">SKATE</span>';
+  else fEl.innerHTML = '<span class="badge unk">UNTESTED ZONE</span>';
+
+  setD('d-sp', head?.SP); setD('d-mpu', head?.MPU); setD('d-scan', head?.['Scan Range']);
+  setD('d-enp', core?.EN); setD('d-eno', core?.['EN Output Rate']); setD('d-enm', core?.['Min. EN Required']);
+  setD('d-marks', arms?.Marksmanship); setD('d-heat', arms?.['Max Heat']);
+  setD('d-spd', legs?.['Basic Speed']);
+  setD('d-dash', boost?.['Dash Output']); setD('d-den', boost?.['Dash EN Drain']); setD('d-jen', boost?.['Jump EN Drain']);
+
+  // weapon gauge readout
+  const wbars = document.getElementById('wbars');
+  document.getElementById('wempty').style.display = equipped.length ? 'none' : 'block';
+  wbars.innerHTML = equipped.map(w => {
+    const stats = ['Range','Overheat','Damage','Accuracy','Reload'];
+    return '<div class="wname">'+w.name+'</div>' + stats.map(s => {
+      const v = w[s+' %'] ?? 0;
+      return `<div class="wstat"><div class="k">${s}</div><div class="bar"><div class="fill" style="width:${v}%"></div><div class="ticks"></div></div><div class="n">${v}%</div></div>`;
+    }).join('');
+  }).join('');
+}
+
+function setD(id, v){
+  document.getElementById(id).textContent = (v === undefined || v === null) ? '—' : fmt(v);
+}
+function setGauge(prefix, used, cap, capWord){
+  const f = document.getElementById(prefix+'-f');
+  const vEl = document.getElementById(prefix+'-v');
+  const m = document.getElementById(prefix+'-m');
+  vEl.textContent = fmt(used) + ' / ' + (cap ? fmt(cap) : '—');
+  if (!cap){
+    f.style.width = used ? '100%' : '0%';
+    f.classList.toggle('over', false);
+    m.className = 'margin';
+    m.textContent = used ? 'no '+capWord+' equipped' : '';
+    return;
+  }
+  const pct = Math.min(100, used / cap * 100);
+  f.style.width = pct + '%';
+  const over = used > cap;
+  f.classList.toggle('over', over);
+  m.className = 'margin ' + (over ? 'bad' : 'ok');
+  m.textContent = over ? 'OVER by ' + fmt(used - cap) : fmt(cap - used) + ' remaining';
+}
+
+
+/* ---------- derived stat formulas (fitted to hangar readouts) ---------- */
+function derived(totalW, legs, core, boost, partEN, anyWeapons){
+  const out = {};
+  out.move  = legs  ? Math.round(legs['Basic Speed'] + 14.7 - totalW/777) : null;
+  out.dash  = boost ? Math.round(boost['Dash Output'] + 248 - totalW/481) : null;
+  out.jump  = boost ? Math.floor(boost['Jump EN Drain'] * totalW / 18000) : null;
+  out.recov = core  ? (core['EN Output Rate'] - partEN - (anyWeapons ? 10 : 0)) : null;
+  return out;
+}
+const FLOAT_MAX = 78680, SKATE_MIN = 94555;
+
+/* ---------- presets ---------- */
+const PRESETS = {
+  test1:   {head:'Valkyrie HD', core:'Blitzker CS',  arms:'Valkyrie AR',        legs:'Aerobolt LE',   booster:'Steel Heart',  allow:2900,
+            note:'Float Test 1 — Heavy-series core at low weight. Floats ⇒ rule is weight; planted ⇒ Heavy cores ground you.'},
+  test2:   {head:'Spazmok HD',  core:'Vigilant CS',  arms:'Valkyrie AR',        legs:'Sidewinder LE', booster:'Cyclone',      allow:2900,
+            note:'Float Test 2 — bisects the 78,680–94,555 window at ~84k.'},
+  skyline: {head:'Spazmok HD',  core:'Sting X CS',   arms:'Sting X AR',         legs:'Centurion LE',  booster:'Cyclone',      allow:2900},
+  skylineg:{head:'Spazmok HD',  core:'Centurion CS', arms:'Centurion AR',       legs:'Centurion LE',  booster:'Cyclone',      allow:0},
+  warlord: {head:'Spazmok HD',  core:'Aerene CS',    arms:'Vigilant AR',        legs:'Sidewinder LE', booster:'Tonei Boomer', allow:0},
+  prime:   {head:'Spazmok HD',  core:'Vigilant CS',  arms:'Vigilant AR',        legs:'Sidewinder LE', booster:'Cyclone',      allow:2900},
+  lprime:  {head:'Spazmok HD',  core:'Valkyrie CS',  arms:'Valkyrie AR',        legs:'Sidewinder LE', booster:'Steel Heart',  allow:2900},
+  fortress:{head:'Bastion HD',  core:'Vigilant CS',  arms:'Aerene AR',          legs:'Vigilant LE',   booster:'Tonei Boomer', allow:0},
+};
+document.querySelectorAll('button.preset').forEach(btn => btn.addEventListener('click', () => {
+  const p = PRESETS[btn.dataset.p]; if(!p) return;
+  document.getElementById('s-head').value = p.head;
+  document.getElementById('s-core').value = p.core;
+  document.getElementById('s-arms').value = p.arms;
+  document.getElementById('s-legs').value = p.legs;
+  document.getElementById('s-booster').value = p.booster;
+  for (const [id] of weapSlots) document.getElementById(id).value = '';
+  document.getElementById('allow').value = p.allow ?? 0;
+  update();
+}));
+document.getElementById('allow').addEventListener('input', update);
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabbtn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabbtn').forEach(x => x.classList.toggle('active', x===b));
+  document.getElementById('v-assembly').style.display = b.dataset.view==='v-assembly' ? '' : 'none';
+  document.getElementById('v-database').style.display = b.dataset.view==='v-database' ? '' : 'none';
+}));
+
+/* ---------- database tab ---------- */
+const DB_TABLES = {
+  'Weapons (all)': {cats: WEAPON_CATS, cols: ['name','category','Series','Size','Range %','Overheat %','Damage %','Accuracy %','Reload %','Weight']},
+  'Head':    {cats:['Head'],    cols:['name','Series','EN Drain','SP','MPU','Scan Range','HP','Size','Weight']},
+  'Core':    {cats:['Core'],    cols:['name','Series','EN Drain','EN','EN Output Rate','Min. EN Required','HP','Size','Weight']},
+  'Arms':    {cats:['Arms'],    cols:['name','Series','EN Drain','Max Heat','Cooldown Rate','Marksmanship','HP','Size','Weight']},
+  'Legs':    {cats:['Legs'],    cols:['name','Series','EN Drain','Basic Speed','Capacity','Deceleration','HP','Size','Weight']},
+  'Booster': {cats:['Booster'], cols:['name','Dash Output','Dash EN Drain','Jump EN Drain','HP','Size','Weight','EN Drain']},
+};
+const dbSel = document.getElementById('db-cat');
+dbSel.innerHTML = Object.keys(DB_TABLES).map(k => `<option>${k}</option>`).join('');
+let dbSort = {col:null, dir:1};
+dbSel.addEventListener('change', () => { dbSort = {col:null, dir:1}; renderDB(); });
+
+function renderDB(){
+  const spec = DB_TABLES[dbSel.value];
+  let rows = ITEMS.filter(i => spec.cats.includes(i.category));
+  if (dbSort.col){
+    rows = rows.slice().sort((a,b) => {
+      const x=a[dbSort.col], y=b[dbSort.col];
+      if (typeof x==='number' && typeof y==='number') return (x-y)*dbSort.dir;
+      return String(x??'').localeCompare(String(y??''))*dbSort.dir;
+    });
+  }
+  const t = document.getElementById('db-table');
+  t.innerHTML = '<tr>' + spec.cols.map(c =>
+      `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`).join('') + '</tr>'
+    + rows.map(r => '<tr data-n="'+r.name.replace(/"/g,'&quot;')+'" data-cat="'+r.category+'">'
+        + spec.cols.map(c => `<td>${typeof r[c]==='number'? r[c].toLocaleString('en-US') : (r[c] ?? '—')}</td>`).join('') + '</tr>').join('');
+  t.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+    const c = th.dataset.c;
+    dbSort = {col:c, dir: dbSort.col===c ? -dbSort.dir : -1}; // first click: descending (best first)
+    renderDB();
+  }));
+  t.querySelectorAll('tr[data-n]').forEach(tr => tr.addEventListener('click', () => {
+    const cat = tr.dataset.cat, name = tr.dataset.n;
+    const slotMap = {Head:'s-head',Core:'s-core',Arms:'s-arms',Legs:'s-legs',Booster:'s-booster'};
+    if (slotMap[cat]) document.getElementById(slotMap[cat]).value = name;
+    else {
+      // weapon: fill first empty weapon slot
+      for (const [id] of weapSlots){ const el=document.getElementById(id); if(!el.value){ el.value=name; break; } }
+    }
+    update();
+    document.querySelector('.tabbtn[data-view="v-assembly"]').click();
+  }));
+}
+renderDB();
+
+document.querySelectorAll('select').forEach(s => s.addEventListener('change', update));
+document.getElementById('btn-reset').addEventListener('click', () => {
+  document.querySelectorAll('select').forEach(s => s.value = '');
+  update();
+});
+update();
+</script>
+</body>
+</html>
