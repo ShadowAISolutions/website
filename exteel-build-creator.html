@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exteel Build Creator v1.5.0</title>
+<title>Exteel Build Creator v1.6.0</title>
 <!-- VERSION POLICY: bump the version in <title> and the #app-version span in the header
      on EVERY change to this file, so the live site can be verified against the repo.
      v1.0.0 initial page · v1.1.0 database filters · v1.2.0 better-direction hints
-     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number -->
+     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number · v1.6.0 shared-stat tags above columns -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -197,6 +197,9 @@ button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
 #db-table th .best.hi{color:var(--ok)}
 #db-table th .best.lo{color:var(--bad)}
 #db-table th .best.none{visibility:hidden}
+#db-table th .shared{display:block;font-size:8px;letter-spacing:.06em;font-weight:600;color:var(--label);opacity:.7;margin-bottom:1px}
+#db-table th .shared.uniq{color:var(--edge-hi);opacity:1;letter-spacing:.18em}
+#db-table th .shared.none{visibility:hidden}
 #db-table td .rk{
   display:inline-block;width:16px;text-align:left;vertical-align:top;
   font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--label);margin-left:4px;opacity:.8;
@@ -244,7 +247,7 @@ button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
 <div class="wrap">
   <div class="hdr">
     <h1>Mechanaught <span>Assembly</span></h1>
-    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.5.0 · 2026-07-18</span></div>
+    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.6.0 · 2026-07-18</span></div>
   </div>
 
   <div class="tabbar">
@@ -544,6 +547,29 @@ const BETTER = {
   'Range %':'hi', 'Overheat %':'lo', 'Damage %':'hi', 'Accuracy %':'hi', 'Reload %':'hi',
 };
 
+/* which part types carry each stat (weapon categories collapse to WPN) */
+const PIECE_ABBR = {Head:'HD', Core:'CS', Arms:'AR', Legs:'LE', Booster:'BST'};
+const PIECE_FULL = {HD:'Head', CS:'Core', AR:'Arms', LE:'Legs', BST:'Booster', WPN:'Weapons'};
+const PIECE_ORDER = ['HD','CS','AR','LE','BST','WPN'];
+const STAT_PIECES = (() => {
+  const map = {};
+  for (const it of ITEMS){
+    const grp = PIECE_ABBR[it.category] ?? 'WPN';
+    for (const k of Object.keys(it)){
+      if (k === 'category' || k === 'name' || k === 'Series') continue;
+      (map[k] ??= new Set()).add(grp);
+    }
+  }
+  return map;
+})();
+function sharedTag(c){
+  const pieces = STAT_PIECES[c];
+  if (!pieces) return '<span class="shared none">&nbsp;</span>';
+  if (pieces.size === 1) return '<span class="shared uniq" title="Only this part type has this stat">UNIQUE</span>';
+  const list = PIECE_ORDER.filter(p => pieces.has(p));
+  return `<span class="shared" title="Part types with this stat: ${list.map(p => PIECE_FULL[p]).join(', ')}">${list.join('·')}</span>`;
+}
+
 /* ---------- database filters ---------- */
 const RANGE_COLS = ['EN Drain','Scan Range','HP','Size','Weight'];
 let dbFilters = {series:null, mpu:null, ranges:{}};
@@ -660,10 +686,10 @@ function renderDB(){
       const b = BETTER[c];
       const hint = b ? `<span class="best ${b}" title="${b==='hi'?'Higher is better':'Lower is better'}">${b==='hi'?'HIGH ▲':'LOW ▼'}</span>`
                      : '<span class="best none">&nbsp;</span>';
-      return `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${hint}${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`;
+      return `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${sharedTag(c)}${hint}${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`;
     }).join('')
     + `<th data-c="__total" class="thtot ${dbSort.col==='__total'?'sorted':''}" title="Sum of this row's ranks across enabled stat columns, ranked — 1 = best overall">`
-    + `<span class="best" style="color:var(--gold)">Σ RANKS</span>Total${dbSort.col==='__total'?(dbSort.dir>0?' ▲':' ▼'):''}</th>`
+    + `<span class="shared none">&nbsp;</span><span class="best" style="color:var(--gold)">Σ RANKS</span>Total${dbSort.col==='__total'?(dbSort.dir>0?' ▲':' ▼'):''}</th>`
     + '</tr>'
     + rows.map(r => '<tr data-n="'+r.name.replace(/"/g,'&quot;')+'" data-cat="'+r.category+'">'
         + visibleCols.map(c => {
