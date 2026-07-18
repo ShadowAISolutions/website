@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exteel Build Creator v1.8.0</title>
+<title>Exteel Build Creator v1.8.1</title>
 <!-- VERSION POLICY: bump the version in <title> and the #app-version span in the header
      on EVERY change to this file, so the live site can be verified against the repo.
      v1.0.0 initial page · v1.1.0 database filters · v1.2.0 better-direction hints
-     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number · v1.6.0 shared-stat tags above columns · v1.7.0 default sort by Total rank · v1.8.0 Spazwinder + Valkyrie Set presets -->
+     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number · v1.6.0 shared-stat tags above columns · v1.7.0 default sort by Total rank · v1.8.0 Spazwinder + Valkyrie Set presets · v1.8.1 Spazwinder weapon loadout -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -247,7 +247,7 @@ button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
 <div class="wrap">
   <div class="hdr">
     <h1>Mechanaught <span>Assembly</span></h1>
-    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.8.0 · 2026-07-18</span></div>
+    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.8.1 · 2026-07-18</span></div>
   </div>
 
   <div class="tabbar">
@@ -504,7 +504,8 @@ const PRESETS = {
   prime:   {head:'Spazmok HD',  core:'Vigilant CS',  arms:'Vigilant AR',        legs:'Sidewinder LE', booster:'Cyclone',      allow:2900},
   lprime:  {head:'Spazmok HD',  core:'Valkyrie CS',  arms:'Valkyrie AR',        legs:'Sidewinder LE', booster:'Steel Heart',  allow:2900},
   fortress:{head:'Bastion HD',  core:'Vigilant CS',  arms:'Aerene AR',          legs:'Vigilant LE',   booster:'Tonei Boomer', allow:0},
-  spazwinder:{head:'Spazmok HD',core:'Spazmok CS',   arms:'Sidewinder AR',      legs:'Sidewinder LE', booster:'Maverick',     allow:0},
+  spazwinder:{head:'Spazmok HD',core:'Spazmok CS',   arms:'Sidewinder AR',      legs:'Sidewinder LE', booster:'Maverick',     allow:0,
+            w1l:'Force Shield-A', w1r:'Hyperion-S', w2l:'Iron Curtain-A', w2r:'Iron Curtain-A'},
   valkset: {head:'Valkyrie HD', core:'Valkyrie CS',  arms:'Valkyrie AR',        legs:'Valkyrie LE',   booster:'Cyclone',      allow:0},
 };
 document.querySelectorAll('button.preset').forEach(btn => btn.addEventListener('click', () => {
@@ -514,7 +515,8 @@ document.querySelectorAll('button.preset').forEach(btn => btn.addEventListener('
   document.getElementById('s-arms').value = p.arms;
   document.getElementById('s-legs').value = p.legs;
   document.getElementById('s-booster').value = p.booster;
-  for (const [id] of weapSlots) document.getElementById(id).value = '';
+  const wkeys = {'s-w1l':'w1l','s-w1r':'w1r','s-w2l':'w2l','s-w2r':'w2r'};
+  for (const [id] of weapSlots) document.getElementById(id).value = p[wkeys[id]] ?? '';
   document.getElementById('allow').value = p.allow ?? 0;
   update();
 }));
