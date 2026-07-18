@@ -189,12 +189,42 @@ button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
 }
 #db-table th:first-child, #db-table td:first-child{text-align:left}
 #db-table th.sorted{color:var(--gold)}
+#db-table th .best{display:block;font-size:8.5px;letter-spacing:.14em;font-weight:700;margin-bottom:1px}
+#db-table th .best.hi{color:var(--ok)}
+#db-table th .best.lo{color:var(--bad)}
+#db-table th .best.none{visibility:hidden}
 #db-table td{
   padding:5px 10px;border-bottom:1px solid rgba(84,168,224,.10);
   font-family:'Share Tech Mono',monospace;font-size:12px;text-align:right;white-space:nowrap;color:var(--value);
 }
 #db-table td:first-child{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13.5px}
 #db-table tr:hover td{background:rgba(84,168,224,.07);cursor:pointer}
+
+/* database filters */
+.dbfilters{
+  border:1px solid rgba(84,168,224,.3);border-radius:4px;
+  background:rgba(8,23,38,.45);padding:8px 12px;margin-bottom:12px;
+}
+.fgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 0}
+.ftag{color:var(--label);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;min-width:78px}
+button.chip{
+  background:var(--bar-track);border:1px solid var(--edge);border-radius:3px;
+  color:var(--label);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:12.5px;
+  padding:3px 12px;cursor:pointer;letter-spacing:.04em;opacity:.4;
+}
+button.chip.on{color:var(--value);border-color:var(--edge-hi);opacity:1;background:#0f2b47}
+button.chip:hover{opacity:1}
+button.chip.clear{opacity:1;color:var(--label);text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:700}
+button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
+.frange{display:flex;align-items:center;gap:5px;margin-right:12px}
+.frange .fk{color:var(--label);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.frange input{
+  width:76px;background:var(--bar-track);border:1px solid var(--edge);border-radius:3px;
+  color:var(--value);font-family:'Share Tech Mono',monospace;font-size:12px;padding:3px 6px;text-align:right;
+}
+.frange input:focus-visible{border-color:var(--edge-hi);outline:none;box-shadow:0 0 0 2px rgba(84,168,224,.35)}
+.frange .dash{color:var(--label)}
+#db-count{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--label);margin-left:auto;font-style:normal}
 
 @media (prefers-reduced-motion: reduce){ .bar .fill{transition:none} }
 </style>
@@ -303,7 +333,8 @@ button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
 
   <div id="v-database" style="display:none">
     <div class="panel" data-tab="Parts Database">
-      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint">click a column header to sort · click a row to equip</span></div>
+      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint"><span style="color:var(--ok)">HIGH ▲</span> = higher is better · <span style="color:var(--bad)">LOW ▼</span> = lower is better · click a column header to sort · click a row to equip</span></div>
+      <div class="dbfilters" id="db-filters"></div>
       <div class="dbwrap"><table id="db-table"></table></div>
     </div>
   
@@ -490,11 +521,94 @@ const DB_TABLES = {
 const dbSel = document.getElementById('db-cat');
 dbSel.innerHTML = Object.keys(DB_TABLES).map(k => `<option>${k}</option>`).join('');
 let dbSort = {col:null, dir:1};
-dbSel.addEventListener('change', () => { dbSort = {col:null, dir:1}; renderDB(); });
+dbSel.addEventListener('change', () => { dbSort = {col:null, dir:1}; buildFilters(); renderDB(); });
+
+/* which direction is better for each stat column */
+const BETTER = {
+  'EN Drain':'lo', 'SP':'hi', 'MPU':'hi', 'Scan Range':'hi', 'HP':'hi', 'Size':'lo', 'Weight':'lo',
+  'EN':'hi', 'EN Output Rate':'hi', 'Min. EN Required':'lo',
+  'Max Heat':'hi', 'Cooldown Rate':'hi', 'Marksmanship':'hi',
+  'Basic Speed':'hi', 'Capacity':'hi', 'Deceleration':'hi',
+  'Dash Output':'hi', 'Dash EN Drain':'lo', 'Jump EN Drain':'lo',
+  'Range %':'hi', 'Overheat %':'lo', 'Damage %':'hi', 'Accuracy %':'hi', 'Reload %':'hi',
+};
+
+/* ---------- database filters ---------- */
+const RANGE_COLS = ['EN Drain','Scan Range','HP','Size','Weight'];
+let dbFilters = {series:null, mpu:null, ranges:{}};
+
+function buildFilters(){
+  const spec = DB_TABLES[dbSel.value];
+  const rows = ITEMS.filter(i => spec.cats.includes(i.category));
+  const box = document.getElementById('db-filters');
+  dbFilters = {series:null, mpu:null, ranges:{}};
+  let html = '';
+
+  // series show/hide chips (Light / Standard / Heavy — weapon types on the weapons table)
+  const seriesVals = [...new Set(rows.map(r => r.Series).filter(v => v != null))];
+  if (seriesVals.length > 1){
+    dbFilters.series = new Set(seriesVals);
+    html += '<div class="fgroup"><span class="ftag">Series</span>' +
+      seriesVals.map(v => `<button class="chip on" data-f="series" data-v="${v}">${v}</button>`).join('') + '</div>';
+  }
+
+  // MPU show/hide chips (heads only)
+  if (spec.cols.includes('MPU')){
+    const mpuVals = [...new Set(rows.map(r => r.MPU).filter(v => v != null))].sort((a,b) => a-b);
+    dbFilters.mpu = new Set(mpuVals);
+    html += '<div class="fgroup"><span class="ftag">MPU</span>' +
+      mpuVals.map(v => `<button class="chip on" data-f="mpu" data-v="${v}">MPU ${v}</button>`).join('') + '</div>';
+  }
+
+  // min/max range inputs for stats present in this table
+  const rcols = RANGE_COLS.filter(c => spec.cols.includes(c));
+  if (rcols.length){
+    html += '<div class="fgroup">' + rcols.map(c => {
+      const vals = rows.map(r => r[c]).filter(v => typeof v === 'number');
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      return `<span class="frange"><span class="fk">${c}</span>` +
+        `<input type="number" data-rc="${c}" data-b="min" placeholder="${lo}" aria-label="${c} minimum">` +
+        `<span class="dash">–</span>` +
+        `<input type="number" data-rc="${c}" data-b="max" placeholder="${hi}" aria-label="${c} maximum"></span>`;
+    }).join('') + '</div>';
+  }
+
+  html += '<div class="fgroup"><button class="chip clear" id="db-clear">Clear filters</button><span id="db-count"></span></div>';
+  box.innerHTML = html;
+
+  box.querySelectorAll('button.chip[data-f]').forEach(b => b.addEventListener('click', () => {
+    const set = dbFilters[b.dataset.f];
+    const v = b.dataset.f === 'mpu' ? Number(b.dataset.v) : b.dataset.v;
+    if (set.has(v)) set.delete(v); else set.add(v);
+    b.classList.toggle('on', set.has(v));
+    renderDB();
+  }));
+  box.querySelectorAll('input[data-rc]').forEach(inp => inp.addEventListener('input', () => {
+    const r = dbFilters.ranges[inp.dataset.rc] ??= {min:null, max:null};
+    r[inp.dataset.b] = inp.value === '' ? null : Number(inp.value);
+    renderDB();
+  }));
+  document.getElementById('db-clear').addEventListener('click', () => { buildFilters(); renderDB(); });
+}
+
+function passesFilters(r){
+  if (dbFilters.series && r.Series != null && !dbFilters.series.has(r.Series)) return false;
+  if (dbFilters.mpu && r.MPU != null && !dbFilters.mpu.has(r.MPU)) return false;
+  for (const [c, b] of Object.entries(dbFilters.ranges)){
+    const v = r[c];
+    if (b.min != null && (typeof v !== 'number' || v < b.min)) return false;
+    if (b.max != null && (typeof v !== 'number' || v > b.max)) return false;
+  }
+  return true;
+}
 
 function renderDB(){
   const spec = DB_TABLES[dbSel.value];
   let rows = ITEMS.filter(i => spec.cats.includes(i.category));
+  const total = rows.length;
+  rows = rows.filter(passesFilters);
+  const countEl = document.getElementById('db-count');
+  if (countEl) countEl.textContent = rows.length === total ? total + ' parts' : rows.length + ' / ' + total + ' parts shown';
   if (dbSort.col){
     rows = rows.slice().sort((a,b) => {
       const x=a[dbSort.col], y=b[dbSort.col];
@@ -503,8 +617,12 @@ function renderDB(){
     });
   }
   const t = document.getElementById('db-table');
-  t.innerHTML = '<tr>' + spec.cols.map(c =>
-      `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`).join('') + '</tr>'
+  t.innerHTML = '<tr>' + spec.cols.map(c => {
+      const b = BETTER[c];
+      const hint = b ? `<span class="best ${b}" title="${b==='hi'?'Higher is better':'Lower is better'}">${b==='hi'?'HIGH ▲':'LOW ▼'}</span>`
+                     : '<span class="best none">&nbsp;</span>';
+      return `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${hint}${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`;
+    }).join('') + '</tr>'
     + rows.map(r => '<tr data-n="'+r.name.replace(/"/g,'&quot;')+'" data-cat="'+r.category+'">'
         + spec.cols.map(c => `<td>${typeof r[c]==='number'? r[c].toLocaleString('en-US') : (r[c] ?? '—')}</td>`).join('') + '</tr>').join('');
   t.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
@@ -524,6 +642,7 @@ function renderDB(){
     document.querySelector('.tabbtn[data-view="v-assembly"]').click();
   }));
 }
+buildFilters();
 renderDB();
 
 document.querySelectorAll('select').forEach(s => s.addEventListener('change', update));
