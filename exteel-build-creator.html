@@ -193,6 +193,11 @@ button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
 #db-table th .best.hi{color:var(--ok)}
 #db-table th .best.lo{color:var(--bad)}
 #db-table th .best.none{visibility:hidden}
+#db-table td .rk{
+  display:inline-block;width:16px;text-align:left;vertical-align:top;
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--label);margin-left:4px;opacity:.8;
+}
+#db-table td .rk.r1{color:var(--gold);opacity:1}
 #db-table td{
   padding:5px 10px;border-bottom:1px solid rgba(84,168,224,.10);
   font-family:'Share Tech Mono',monospace;font-size:12px;text-align:right;white-space:nowrap;color:var(--value);
@@ -333,7 +338,7 @@ button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
 
   <div id="v-database" style="display:none">
     <div class="panel" data-tab="Parts Database">
-      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint"><span style="color:var(--ok)">HIGH ▲</span> = higher is better · <span style="color:var(--bad)">LOW ▼</span> = lower is better · click a column header to sort · click a row to equip</span></div>
+      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint"><span style="color:var(--ok)">HIGH ▲</span> = higher is better · <span style="color:var(--bad)">LOW ▼</span> = lower is better · small number = rank among visible parts (<span style="color:var(--gold)">1</span> = best) · click a column header to sort · click a row to equip</span></div>
       <div class="dbfilters" id="db-filters"></div>
       <div class="dbwrap"><table id="db-table"></table></div>
     </div>
@@ -616,6 +621,14 @@ function renderDB(){
       return String(x??'').localeCompare(String(y??''))*dbSort.dir;
     });
   }
+  // per-column ranks among visible rows (1 = best per BETTER direction; ties share a rank)
+  const ranks = {};
+  for (const c of spec.cols){
+    if (!BETTER[c]) continue;
+    const vals = [...new Set(rows.map(r => r[c]).filter(v => typeof v === 'number'))];
+    vals.sort((a,b) => BETTER[c] === 'hi' ? b-a : a-b);
+    ranks[c] = new Map(vals.map((v,i) => [v, i+1]));
+  }
   const t = document.getElementById('db-table');
   t.innerHTML = '<tr>' + spec.cols.map(c => {
       const b = BETTER[c];
@@ -624,7 +637,12 @@ function renderDB(){
       return `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${hint}${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`;
     }).join('') + '</tr>'
     + rows.map(r => '<tr data-n="'+r.name.replace(/"/g,'&quot;')+'" data-cat="'+r.category+'">'
-        + spec.cols.map(c => `<td>${typeof r[c]==='number'? r[c].toLocaleString('en-US') : (r[c] ?? '—')}</td>`).join('') + '</tr>').join('');
+        + spec.cols.map(c => {
+            const v = r[c];
+            if (typeof v !== 'number') return `<td>${v ?? '—'}</td>`;
+            const rk = ranks[c] ? ranks[c].get(v) : null;
+            return `<td>${v.toLocaleString('en-US')}${rk ? `<span class="rk${rk===1?' r1':''}">${rk}</span>` : ''}</td>`;
+          }).join('') + '</tr>').join('');
   t.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
     const c = th.dataset.c;
     dbSort = {col:c, dir: dbSort.col===c ? -dbSort.dir : -1}; // first click: descending (best first)
