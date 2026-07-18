@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Exteel Build Creator v1.6.0</title>
+<title>Exteel Build Creator v1.7.0</title>
 <!-- VERSION POLICY: bump the version in <title> and the #app-version span in the header
      on EVERY change to this file, so the live site can be verified against the repo.
      v1.0.0 initial page · v1.1.0 database filters · v1.2.0 better-direction hints
-     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number · v1.6.0 shared-stat tags above columns -->
+     v1.3.0 per-column ranks · v1.4.0 Total rank + column toggles · v1.5.0 visible version number · v1.6.0 shared-stat tags above columns · v1.7.0 default sort by Total rank -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
@@ -247,7 +247,7 @@ button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
 <div class="wrap">
   <div class="hdr">
     <h1>Mechanaught <span>Assembly</span></h1>
-    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.6.0 · 2026-07-18</span></div>
+    <div class="sub">EXTEEL BUILD CREATOR // 191 PARTS INDEXED // <span id="app-version" style="color:var(--gold)">V1.7.0 · 2026-07-18</span></div>
   </div>
 
   <div class="tabbar">
@@ -534,8 +534,8 @@ const DB_TABLES = {
 };
 const dbSel = document.getElementById('db-cat');
 dbSel.innerHTML = Object.keys(DB_TABLES).map(k => `<option>${k}</option>`).join('');
-let dbSort = {col:null, dir:1};
-dbSel.addEventListener('change', () => { dbSort = {col:null, dir:1}; buildFilters(); renderDB(); });
+let dbSort = {col:'__total', dir:1}; // default: best overall first
+dbSel.addEventListener('change', () => { dbSort = {col:'__total', dir:1}; buildFilters(); renderDB(); });
 
 /* which direction is better for each stat column */
 const BETTER = {
@@ -671,7 +671,7 @@ function renderDB(){
   const sumVals = [...new Set(sums.values())].sort((a,b) => a-b);
   const totRank = new Map(sumVals.map((v,i) => [v, i+1]));
 
-  if (dbSort.col && dbSort.col !== '__total' && !visibleCols.includes(dbSort.col)) dbSort = {col:null, dir:1};
+  if (dbSort.col && dbSort.col !== '__total' && !visibleCols.includes(dbSort.col)) dbSort = {col:'__total', dir:1};
   if (dbSort.col){
     const key = r => dbSort.col === '__total' ? sums.get(r) : r[dbSort.col];
     rows = rows.slice().sort((a,b) => {
