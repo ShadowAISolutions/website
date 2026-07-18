@@ -189,6 +189,10 @@ button.preset:hover{border-color:var(--edge-hi);background:#0f2b47}
 }
 #db-table th:first-child, #db-table td:first-child{text-align:left}
 #db-table th.sorted{color:var(--gold)}
+#db-table th .best{display:block;font-size:8.5px;letter-spacing:.14em;font-weight:700;margin-bottom:1px}
+#db-table th .best.hi{color:var(--ok)}
+#db-table th .best.lo{color:var(--bad)}
+#db-table th .best.none{visibility:hidden}
 #db-table td{
   padding:5px 10px;border-bottom:1px solid rgba(84,168,224,.10);
   font-family:'Share Tech Mono',monospace;font-size:12px;text-align:right;white-space:nowrap;color:var(--value);
@@ -329,7 +333,7 @@ button.chip.clear:hover{color:var(--value);border-color:var(--edge-hi)}
 
   <div id="v-database" style="display:none">
     <div class="panel" data-tab="Parts Database">
-      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint">click a column header to sort · click a row to equip</span></div>
+      <div class="dbctl"><label for="db-cat" class="dblab">Table</label><select id="db-cat"></select><span class="dbhint"><span style="color:var(--ok)">HIGH ▲</span> = higher is better · <span style="color:var(--bad)">LOW ▼</span> = lower is better · click a column header to sort · click a row to equip</span></div>
       <div class="dbfilters" id="db-filters"></div>
       <div class="dbwrap"><table id="db-table"></table></div>
     </div>
@@ -519,6 +523,16 @@ dbSel.innerHTML = Object.keys(DB_TABLES).map(k => `<option>${k}</option>`).join(
 let dbSort = {col:null, dir:1};
 dbSel.addEventListener('change', () => { dbSort = {col:null, dir:1}; buildFilters(); renderDB(); });
 
+/* which direction is better for each stat column */
+const BETTER = {
+  'EN Drain':'lo', 'SP':'hi', 'MPU':'hi', 'Scan Range':'hi', 'HP':'hi', 'Size':'lo', 'Weight':'lo',
+  'EN':'hi', 'EN Output Rate':'hi', 'Min. EN Required':'lo',
+  'Max Heat':'hi', 'Cooldown Rate':'hi', 'Marksmanship':'hi',
+  'Basic Speed':'hi', 'Capacity':'hi', 'Deceleration':'hi',
+  'Dash Output':'hi', 'Dash EN Drain':'lo', 'Jump EN Drain':'lo',
+  'Range %':'hi', 'Overheat %':'lo', 'Damage %':'hi', 'Accuracy %':'hi', 'Reload %':'hi',
+};
+
 /* ---------- database filters ---------- */
 const RANGE_COLS = ['EN Drain','Scan Range','HP','Size','Weight'];
 let dbFilters = {series:null, mpu:null, ranges:{}};
@@ -603,8 +617,12 @@ function renderDB(){
     });
   }
   const t = document.getElementById('db-table');
-  t.innerHTML = '<tr>' + spec.cols.map(c =>
-      `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`).join('') + '</tr>'
+  t.innerHTML = '<tr>' + spec.cols.map(c => {
+      const b = BETTER[c];
+      const hint = b ? `<span class="best ${b}" title="${b==='hi'?'Higher is better':'Lower is better'}">${b==='hi'?'HIGH ▲':'LOW ▼'}</span>`
+                     : '<span class="best none">&nbsp;</span>';
+      return `<th data-c="${c}" class="${dbSort.col===c?'sorted':''}">${hint}${c==='name'?'Name':c}${dbSort.col===c?(dbSort.dir>0?' ▲':' ▼'):''}</th>`;
+    }).join('') + '</tr>'
     + rows.map(r => '<tr data-n="'+r.name.replace(/"/g,'&quot;')+'" data-cat="'+r.category+'">'
         + spec.cols.map(c => `<td>${typeof r[c]==='number'? r[c].toLocaleString('en-US') : (r[c] ?? '—')}</td>`).join('') + '</tr>').join('');
   t.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
